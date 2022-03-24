@@ -40,6 +40,8 @@ import Foundation
             return "1st player"
         case .second:
             return "2nd player"
+        case .computer:
+            return "computer"
         }
     }
 }

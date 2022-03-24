@@ -31,22 +31,40 @@ public class PlayerInputState: GameState {
         case .first:
             self.gameViewController?.firstPlayerTurnLabel.isHidden = false
             self.gameViewController?.secondPlayerTurnLabel.isHidden = true
+            self.gameViewController?.firstPlayerTurnLabel.text = self.playerName(from: player)
         case .second:
             self.gameViewController?.firstPlayerTurnLabel.isHidden = true
             self.gameViewController?.secondPlayerTurnLabel.isHidden = false
+            self.gameViewController?.secondPlayerTurnLabel.text = self.playerName(from: player)
+        case .computer:
+            self.gameViewController?.firstPlayerTurnLabel.isHidden = true
+            self.gameViewController?.secondPlayerTurnLabel.isHidden = false
+            self.gameViewController?.secondPlayerTurnLabel.text = self.playerName(from: player)
         }
         self.gameViewController?.winnerLabel.isHidden = true
     }
     
     public func addMark(at position: GameboardPosition) {
         Log(.playerInput(player: self.player, position: position))
-       
+        
         guard let gameboardView = self.gameboardView
-               , gameboardView.canPlaceMarkView(at: position)
-               else { return }
-           
-           self.gameboard?.setPlayer(self.player, at: position)
-           self.gameboardView?.placeMarkView(self.markViewPrototype.copy(), at: position)
-           self.isCompleted = true
+                , gameboardView.canPlaceMarkView(at: position)
+        else { return }
+        
+        self.gameboard?.setPlayer(self.player, at: position)
+        self.gameboardView?.placeMarkView(self.markViewPrototype.copy(), at: position)
+        self.isCompleted = true
     }
+    
+    private func playerName(from player: Player) -> String {
+        switch player {
+        case .first:
+            return "1st player"
+        case .second:
+            return "2nd player"
+        case .computer:
+            return "computer"
+        }
+    }
+    
 }

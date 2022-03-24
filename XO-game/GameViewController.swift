@@ -16,6 +16,7 @@ class GameViewController: UIViewController {
     @IBOutlet var winnerLabel: UILabel!
     @IBOutlet var restartButton: UIButton!
     
+    let mode = GameSession.shared.mode
     private var counter = 0
     private let gameboard = Gameboard()
     private var currentState: GameState! {
@@ -29,6 +30,7 @@ class GameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.configureUI()
         self.goToFirstState()
         
         gameboardView.onSelectPosition = { [weak self] position in
@@ -37,6 +39,7 @@ class GameViewController: UIViewController {
             if self.currentState.isCompleted {
                 self.counter += 1
                 self.goToNextState()
+                print(self.counter)
             }
         }
     }
@@ -61,6 +64,8 @@ class GameViewController: UIViewController {
     }
     
     private func goToNextState() {
+        
+        
         if let winner = self.referee.determineWinner() {
             self.currentState = GameEndedState(winner: winner, gameViewController: self)
             return
@@ -73,14 +78,45 @@ class GameViewController: UIViewController {
         
         if let playerInputState = currentState as? PlayerInputState {
             let player = playerInputState.player.next
-            self.currentState = PlayerInputState(player: player,
-                                                 markViewPrototype: player.markViewPrototype,
-                                                 gameViewController: self,
-                                                 gameboard: gameboard,
-                                                 gameboardView: gameboardView)
             
+            if player == .first || player == .second {
+                self.currentState = PlayerInputState(player: player,
+                                                     markViewPrototype: player.markViewPrototype,
+                                                     gameViewController: self,
+                                                     gameboard: gameboard,
+                                                     gameboardView: gameboardView)
+            } else {
+                delay(0.5) { [self] in
+                    currentState = ComputerInputState(player: player,
+                                                      markViewPrototype: player.markViewPrototype,
+                                                      gameViewController: self,
+                                                      gameboard: gameboard,
+                                                      gameboardView: gameboardView)
+                    
+                    if let winner = self.referee.determineWinner() {
+                        self.currentState = GameEndedState(winner: winner, gameViewController: self)
+                        return
+                    } else {
+                        counter += 1
+                        goToFirstState()
+                    }
+                }
+                
+            }
+        }
+        
+    }
+    
+    private func configureUI() {
+        if mode == .againstComputer {
+            firstPlayerTurnLabel.text = "Human"
+            secondPlayerTurnLabel.text = "Computer"
         }
     }
     
+    func delay(_ delay: Double, closure: @escaping ()->()) {
+        let when = DispatchTime.now() + delay
+        DispatchQueue.main.asyncAfter(deadline: when, execute: closure)
+    }
 }
 

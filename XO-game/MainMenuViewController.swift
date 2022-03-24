@@ -30,13 +30,13 @@ class MainMenuViewController: UIViewController {
     }
     
     @IBAction func computerButtonAction(_ sender: Any) {
-        GameSession.shared.mode = .againstHuman
+        GameSession.shared.mode = .againstComputer
         performSegue(withIdentifier: "StartGame", sender: self)
         
     }
     
     @IBAction func fiveByFiveButtonAction(_ sender: Any) {
-        GameSession.shared.mode = .againstHuman
+        GameSession.shared.mode = .fiveByFive
         performSegue(withIdentifier: "StartGame", sender: self)
         
     }
