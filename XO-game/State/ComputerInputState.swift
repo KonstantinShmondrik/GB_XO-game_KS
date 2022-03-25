@@ -28,26 +28,26 @@ public class ComputerInputState: GameState {
     }
     
     public func begin() {
-//        switch self.player {
-//        case .first:
-//            self.gameViewController?.firstPlayerTurnLabel.isHidden = false
-//            self.gameViewController?.secondPlayerTurnLabel.isHidden = true
-//            self.gameViewController?.firstPlayerTurnLabel.text = self.playerName(from: player)
-//        case .second:
-//            self.gameViewController?.firstPlayerTurnLabel.isHidden = true
-//            self.gameViewController?.secondPlayerTurnLabel.isHidden = false
-//            self.gameViewController?.secondPlayerTurnLabel.text = self.playerName(from: player)
-//        case .computer:
-//            self.gameViewController?.firstPlayerTurnLabel.isHidden = true
-//            self.gameViewController?.secondPlayerTurnLabel.isHidden = false
-//            self.gameViewController?.secondPlayerTurnLabel.text = self.playerName(from: player)
-//        }
+        switch self.player {
+        case .first:
+            self.gameViewController?.firstPlayerTurnLabel.isHidden = false
+            self.gameViewController?.secondPlayerTurnLabel.isHidden = true
+            self.gameViewController?.firstPlayerTurnLabel.text = self.playerName(from: player)
+        case .second:
+            self.gameViewController?.firstPlayerTurnLabel.isHidden = true
+            self.gameViewController?.secondPlayerTurnLabel.isHidden = false
+            self.gameViewController?.secondPlayerTurnLabel.text = self.playerName(from: player)
+        case .computer:
+            self.gameViewController?.firstPlayerTurnLabel.isHidden = true
+            self.gameViewController?.secondPlayerTurnLabel.isHidden = false
+            self.gameViewController?.secondPlayerTurnLabel.text = self.playerName(from: player)
+        }
        
         if let position = calculatePosition() {
             addMark(at: position)
         }
         
-//        self.gameViewController?.winnerLabel.isHidden = true
+        self.gameViewController?.winnerLabel.isHidden = true
     }
     
     public func addMark(at position: GameboardPosition) {
@@ -62,16 +62,16 @@ public class ComputerInputState: GameState {
         self.isCompleted = true
     }
     
-//    private func playerName(from player: Player) -> String {
-//        switch player {
-//        case .first:
-//            return "1st player"
-//        case .second:
-//            return "2nd player"
-//        case .computer:
-//            return "computer"
-//        }
-//    }
+    private func playerName(from player: Player) -> String {
+        switch player {
+        case .first:
+            return "1st player"
+        case .second:
+            return "2nd player"
+        case .computer:
+            return "computer"
+        }
+    }
     
     private func calculatePosition() -> GameboardPosition? {
         var positions: [GameboardPosition] = []

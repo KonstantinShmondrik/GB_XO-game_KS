@@ -9,8 +9,9 @@
 import UIKit
 
 class GameViewController: UIViewController {
+    @IBOutlet weak var gameboardView: GameboardView!
     
-    @IBOutlet var gameboardView: GameboardView!
+    
     @IBOutlet var firstPlayerTurnLabel: UILabel!
     @IBOutlet var secondPlayerTurnLabel: UILabel!
     @IBOutlet var winnerLabel: UILabel!
@@ -27,21 +28,32 @@ class GameViewController: UIViewController {
     
     private lazy var referee = Referee(gameboard: self.gameboard)
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.configureUI()
+        
         self.goToFirstState()
         
         gameboardView.onSelectPosition = { [weak self] position in
             guard let self = self else { return }
+            
             self.currentState.addMark(at: position)
+            
             if self.currentState.isCompleted {
-                self.counter += 1
-                self.goToNextState()
-                print(self.counter)
+                if self.mode == .fiveByFive {
+                    self.delay(0.5) {
+                        self.gameboardView.clear()
+                        self.gameboard.clear()
+                        self.goToNextState()
+                    }
+                } else {
+                    self.counter += 1
+                    self.goToNextState()
+                }
             }
         }
+        
     }
     
     @IBAction func restartButtonTapped(_ sender: UIButton) {
@@ -49,34 +61,52 @@ class GameViewController: UIViewController {
         gameboard.clear()
         gameboardView.clear()
         counter = 0
+        GameSession.shared.playerFirstMoves = []
+        GameSession.shared.playerSecondMoves = []
         goToFirstState()
-        
-        
     }
     
+    // MARK: - First State
     private func goToFirstState() {
         let player = Player.first
-        self.currentState = PlayerInputState(player: player,
-                                             markViewPrototype: player.markViewPrototype,
-                                             gameViewController: self,
-                                             gameboard: gameboard,
-                                             gameboardView: gameboardView)
+        
+        if mode == .fiveByFive {
+            currentState = FiveByFiveState(player: player,
+                                           markViewPrototype: player.markViewPrototype,
+                                           gameViewController: self,
+                                           gameboard: gameboard,
+                                           gameboardView: gameboardView)
+        } else {
+            self.currentState = PlayerInputState(player: player,
+                                                 markViewPrototype: player.markViewPrototype,
+                                                 gameViewController: self,
+                                                 gameboard: gameboard,
+                                                 gameboardView: gameboardView)
+        }
     }
     
+    // MARK: - Nex State
     private func goToNextState() {
-        
-        
+        // Проверяем есть ли совпадения выигрышных комбинаций
         if let winner = self.referee.determineWinner() {
             self.currentState = GameEndedState(winner: winner, gameViewController: self)
             return
         }
-        
+        // Проверяем заполнено ли все поле (победителя нет)
         if counter >= (GameboardSize.columns * GameboardSize.rows) {
             self.currentState = GameEndedState(winner: nil, gameViewController: self)
             return
         }
-        
-        if let playerInputState = currentState as? PlayerInputState {
+        // Проверяем наполнение обоих массивов ходов игроков при игре на пять ходов
+        if mode == .fiveByFive && checkForGameCompleted() {
+            endedStateToFiveByFive()
+        }
+        // Поочередные ходы игроков в зависимости от режимов игры (2 игрока или с компьютером)
+        if mode == .fiveByFive, let playerInputState = currentState as? FiveByFiveState {
+            let player = playerInputState.player.next
+            currentState = FiveByFiveState(player: player, markViewPrototype: player.markViewPrototype, gameViewController: self, gameboard: gameboard, gameboardView: gameboardView)
+            
+        } else if let playerInputState = currentState as? PlayerInputState {
             let player = playerInputState.player.next
             
             if player == .first || player == .second {
@@ -86,32 +116,52 @@ class GameViewController: UIViewController {
                                                      gameboard: gameboard,
                                                      gameboardView: gameboardView)
             } else {
-                delay(0.5) { [self] in
-                    currentState = ComputerInputState(player: player,
-                                                      markViewPrototype: player.markViewPrototype,
-                                                      gameViewController: self,
-                                                      gameboard: gameboard,
-                                                      gameboardView: gameboardView)
-                    
-                    if let winner = self.referee.determineWinner() {
-                        self.currentState = GameEndedState(winner: winner, gameViewController: self)
-                        return
-                    } else {
-                        counter += 1
-                        goToFirstState()
-                    }
-                }
-                
+                goToComputerState()
             }
         }
+    }
+    
+    // MARK: - Computer State
+    private func goToComputerState() {
+        let player = Player.computer
+        delay(0.5) { [self] in
+            currentState = ComputerInputState(player: player,
+                                              markViewPrototype: player.markViewPrototype,
+                                              gameViewController: self,
+                                              gameboard: gameboard,
+                                              gameboardView: gameboardView)
+            
+            if let winner = self.referee.determineWinner() {
+                self.currentState = GameEndedState(winner: winner, gameViewController: self)
+                return
+            } else {
+                counter += 1
+                goToFirstState()
+            }
+        }
+    }
+    // MARK: - Окончание игры в режиме FiveByFive
+    private func endedStateToFiveByFive() {
+        
+        currentState = GameExecuteState(gameViewController: self,
+                                        gameboard: gameboard,
+                                        gameboardView: gameboardView) { [self] in
+            
+            if let winner = referee.determineWinner() {
+                Log(.gameFinished(winner: winner))
+                
+                currentState = GameEndedState(winner: winner, gameViewController: self)
+            } else {
+                Log(.gameFinished(winner: nil))
+                currentState = GameEndedState(winner: nil, gameViewController: self)
+            }
+        }
+        return
         
     }
     
-    private func configureUI() {
-        if mode == .againstComputer {
-            firstPlayerTurnLabel.text = "Human"
-            secondPlayerTurnLabel.text = "Computer"
-        }
+    private func checkForGameCompleted() -> Bool {
+        return GameSession.shared.playerFirstMoves.count > 0 && GameSession.shared.playerSecondMoves.count > 0
     }
     
     func delay(_ delay: Double, closure: @escaping ()->()) {

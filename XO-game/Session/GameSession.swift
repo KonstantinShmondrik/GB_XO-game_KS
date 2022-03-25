@@ -15,6 +15,6 @@ final class GameSession {
     
     var mode: GameMode?
     
-//    var playerFirstMoves: [PlayerMove] = []
-//    var playerSecondMoves: [PlayerMove] = []
+    var playerFirstMoves: [PlayerMove] = []
+    var playerSecondMoves: [PlayerMove] = []
 }
